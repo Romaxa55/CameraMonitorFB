@@ -2,19 +2,26 @@ import cv2
 import numpy as np
 import logging
 import asyncio
+import time
 
 
 class Camera:
-    def __init__(self, url, position, label, border_thickness, border_color, reconnect_delay=5):
+    def __init__(self, url, position, label, fps=25, border_thickness=2, border_color=(50, 50, 50, 255),
+                 reconnect_interval=120):
         self.url = url
         self.position = position
         self.label = label
+        self.fps = fps
+        self.frame_interval = 1 / fps
         self.border_thickness = border_thickness
         self.border_color = border_color
-        self.reconnect_delay = reconnect_delay  # Задержка перед попыткой переподключения (в секундах)
+        self.last_frame = None
         self.cap = None
         self.width, self.height = self.position[2]
         self.logger = logging.getLogger("Camera")
+        self.reconnect_interval = reconnect_interval
+        self.last_reconnect_time = time.time()
+        self.last_frame_time = 0
 
     async def connect(self):
         """Асинхронное подключение к камере."""
@@ -24,53 +31,47 @@ class Camera:
         else:
             self.logger.info(f"Подключен к потоку {self.url} для камеры {self.label}")
 
-    async def get_frame(self):
-        """Асинхронно возвращает текущий кадр с камеры или чёрный экран с надписью 'No Signal'."""
-        if not self.cap or not self.cap.isOpened():
-            self.logger.warning(f"Поток {self.url} недоступен, попытка переподключения через {self.reconnect_delay} секунд...")
-            await asyncio.sleep(self.reconnect_delay)
+    async def reconnect_if_needed(self):
+        """Переподключается к камере, если прошло достаточно времени с последнего подключения."""
+        current_time = time.time()
+        if current_time - self.last_reconnect_time >= self.reconnect_interval:
+            self.logger.info(f"Переподключение к камере {self.label} для сброса буфера.")
+            await self.release()
             await self.connect()
-            return self._generate_no_signal_frame()
+            self.last_reconnect_time = current_time
 
-        # Пробуем захватить кадр
+    async def get_frame(self):
+        """Возвращает новый кадр, если доступен и прошел достаточный интервал, иначе возвращает последний кадр."""
+        await self.reconnect_if_needed()  # Проверка необходимости переподключения
+
+        if self.cap is None or not self.cap.isOpened():
+            await self.connect()
+
+        current_time = time.time()
+
+        # Пропускаем кадры, если они слишком быстро поступают
+        if current_time - self.last_frame_time < self.frame_interval:
+            return self.last_frame
+
+        # Захват кадра
         ret, frame = await asyncio.to_thread(self.cap.read)
-        if not ret:
-            self.logger.warning(f"Ошибка при чтении потока {self.url} для камеры {self.label}")
-            frame = self._generate_no_signal_frame()
-        else:
-            # Масштабируем кадр до нужного размера
-            frame = cv2.resize(frame, (self.width, self.height))
+        if ret:
+            self.last_frame = cv2.resize(frame, (self.width, self.height))
+            self.last_frame_time = current_time  # Обновляем время последнего кадра
 
-        # Добавляем метку камеры и рамки
-        label_color = (102, 178, 255)
-        cv2.putText(frame, self.label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, label_color, 2, cv2.LINE_AA)
-        frame = self.add_borders(frame)
-        return frame
-
-    def _generate_no_signal_frame(self):
-        """Создаёт черный кадр с надписью 'No Signal'."""
-        frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-        text = "No Signal"
-        text_x = self.width // 4
-        text_y = self.height // 2
-        text_color = (102, 178, 255)
-
-        # Рисуем текст с легкой тенью
-        shadow_offset = 2
-        cv2.putText(frame, text, (text_x + shadow_offset, text_y + shadow_offset),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 2, cv2.LINE_AA)
-        cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2, cv2.LINE_AA)
-        return frame
+        return self.last_frame
 
     def add_borders(self, frame):
         """Добавляет рамку к кадру."""
-        frame[:self.border_thickness, :, :] = self.border_color[:3]  # Верхний бордер
-        frame[-self.border_thickness:, :, :] = self.border_color[:3]  # Нижний бордер
-        frame[:, :self.border_thickness, :] = self.border_color[:3]  # Левый бордер
-        frame[:, -self.border_thickness:, :] = self.border_color[:3]  # Правый бордер
+        frame[:self.border_thickness, :, :] = self.border_color[:3]
+        frame[-self.border_thickness:, :, :] = self.border_color[:3]
+        frame[:, :self.border_thickness, :] = self.border_color[:3]
+        frame[:, -self.border_thickness:, :] = self.border_color[:3]
         return frame
 
     async def release(self):
         """Освобождает поток камеры."""
-        await asyncio.to_thread(self.cap.release)
+        if self.cap:
+            await asyncio.to_thread(self.cap.release)
+            self.cap = None
         self.logger.info(f"Поток для камеры {self.label} освобождён.")

@@ -90,7 +90,7 @@ class CameraDisplay:
             self.logger.error(f"Ошибка при открытии фреймбуфера: {e}")
             raise
 
-        asyncio.create_task(self.write_to_framebuffer_loop())
+        asyncio.create_task(self.write_to_framebuffer_loop())  # Задача для вывода на экран
 
     def draw_initial_grid(self, background):
         for idx, (x, y, (width, height)) in enumerate(self.camera_positions):
@@ -121,6 +121,7 @@ class CameraDisplay:
         self.logger.info("Камеры инициализированы как независимые задачи.")
 
     async def update_camera_display(self, camera):
+        """Обновляет фон с кадрами от всех камер."""
         while self.is_running:
             frame = await camera.get_frame()
             x, y, _ = camera.position
@@ -128,6 +129,7 @@ class CameraDisplay:
             await asyncio.sleep(self.frame_interval)
 
     async def write_to_framebuffer_loop(self):
+        """Постоянно записывает обновлённый фон в фреймбуфер."""
         while self.is_running:
             self.fb.seek(0)
             self.fb.write(self.background.tobytes())
@@ -135,7 +137,7 @@ class CameraDisplay:
 
     async def close_framebuffer(self):
         self.is_running = False  # Останавливаем цикл записи в буфер
-        await asyncio.sleep(self.frame_interval)  # Ждем, чтобы завершить текущую запись
+        await asyncio.sleep(self.frame_interval)  # Ждем завершения текущей записи
         if not self.fb.closed:
             self.fb.close()
             self.logger.info("Фреймбуфер закрыт.")
