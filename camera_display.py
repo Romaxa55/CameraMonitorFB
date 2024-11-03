@@ -106,13 +106,27 @@ class CameraDisplay:
         await self.write_to_framebuffer()
 
     def draw_initial_grid(self, background):
-        """Рисует начальную сетку с надписями 'No Signal' на фоне до подключения камер."""
+        """Рисует начальную сетку с надписями 'No Signal' в приятном цвете и легкой тенью на фоне до подключения камер."""
         for idx, (x, y, (width, height)) in enumerate(self.camera_positions):
+            # Рисуем рамку вокруг области для камеры
             cv2.rectangle(background, (x, y), (x + width, y + height), self.border_color, self.border_thickness)
-            cv2.putText(
-                background, "No Signal", (x + 10, y + height // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0, 255), 2, cv2.LINE_AA
-            )
+
+            # Позиция и размер текста
+            text = "No Signal"
+            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+            text_x = x + (width - text_size[0]) // 2
+            text_y = y + (height + text_size[1]) // 2
+
+            # Цвет текста (мягкий синий-зеленый)
+            text_color = (102, 178, 255, 255)  # Цвет RGB: светло-голубой с мягким оттенком
+
+            # Добавляем легкую тень для объемности
+            shadow_offset = 2
+            cv2.putText(background, text, (text_x + shadow_offset, text_y + shadow_offset),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50, 255), 2, cv2.LINE_AA)
+
+            # Основной текст
+            cv2.putText(background, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2, cv2.LINE_AA)
 
     async def create_cameras(self, channels):
         """Асинхронно создаёт камеры на основе информации из config.CHANNELS и сразу отображает их в фреймбуфере."""

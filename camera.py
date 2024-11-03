@@ -21,14 +21,31 @@ class Camera:
         """Возвращает текущий кадр с камеры или чёрный экран с надписью 'No Signal'."""
         ret, frame = self.cap.read()
         if not ret:
+            # Создаем черный экран с надписью "No Signal"
             frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-            cv2.putText(frame, "No Signal", (self.width // 4, self.height // 2),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+            # Позиция текста "No Signal"
+            text = "No Signal"
+            text_x = self.width // 4
+            text_y = self.height // 2
+
+            # Цвет текста и легкая тень
+            text_color = (102, 178, 255)  # Мягкий светло-голубой
+            shadow_offset = 2
+
+            # Рисуем тень
+            cv2.putText(frame, text, (text_x + shadow_offset, text_y + shadow_offset),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 2, cv2.LINE_AA)
+
+            # Рисуем основной текст
+            cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2, cv2.LINE_AA)
         else:
+            # Масштабируем кадр до нужного размера, если он доступен
             frame = cv2.resize(frame, (self.width, self.height))
 
-        # Добавляем текст и рамки
-        cv2.putText(frame, self.label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+        # Добавляем метку камеры с рамками
+        label_color = (102, 178, 255)
+        cv2.putText(frame, self.label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, label_color, 2, cv2.LINE_AA)
         frame = self.add_borders(frame)
         return frame
 
