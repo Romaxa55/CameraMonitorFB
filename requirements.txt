@@ -1,0 +1,5 @@
+opencv-python-headless
+board
+pillow
+cython
+fbpy
