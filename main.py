@@ -10,11 +10,17 @@ logging.basicConfig(level=logging.INFO)
 
 async def main():
     display = CameraDisplay()
-    await display.initialize_framebuffer()
-    await display.create_cameras(config.CHANNELS)
-    await display.display_streams()
+    await display.initialize_framebuffer()  # Инициализация фреймбуфера и запуск цикла записи
+    await display.create_cameras(config.CHANNELS)  # Создание камер и их отображение в фоновом режиме
 
-    await display.close_framebuffer()
+    try:
+        # Периодическое обновление, удерживающее основную программу активной
+        while True:
+            await asyncio.sleep(1)  # Поддерживаем цикл, пока не будет получен сигнал завершения
+    except KeyboardInterrupt:
+        pass
+    finally:
+        await display.close_framebuffer()  # Корректное завершение при выходе из программы
 
 if __name__ == "__main__":
     asyncio.run(main())
