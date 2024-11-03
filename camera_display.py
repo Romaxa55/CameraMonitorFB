@@ -10,12 +10,11 @@ import config
 
 
 class CameraDisplay:
-    def __init__(self, fb_path="/dev/fb0", fps=26, border_thickness=4, main_padding=(10, 10)):
+    def __init__(self, fb_path="/dev/fb0", fps=26, border_thickness=2):
         self.fb_path = fb_path
         self.fps = fps
         self.frame_interval = 1 / fps
         self.border_thickness = border_thickness
-        self.main_padding = main_padding
         self.border_color = (50, 50, 50, 255)
         self.logger = logging.getLogger("CameraDisplay")
         logging.basicConfig(level=logging.INFO)
@@ -26,8 +25,8 @@ class CameraDisplay:
 
         # Определяем размеры областей для камер
         self.main_camera_size = (
-            self.fb_width // 2 - 2 * main_padding[0],
-            self.fb_height // 2 - 2 * main_padding[1]
+            self.fb_width // 2,
+            self.fb_height // 2
         )
         self.grid_camera_size = (
             self.fb_width // 4 - border_thickness,
@@ -52,17 +51,16 @@ class CameraDisplay:
         main_width, main_height = self.main_camera_size
         grid_width, grid_height = self.grid_camera_size
         bt = self.border_thickness
-        mp_x, mp_y = self.main_padding  # Main padding
 
         # Центрируем основную камеру
-        positions = [(mp_x, mp_y, self.main_camera_size)]
+        positions = [(0, 0, self.main_camera_size)]
         self.logger.info(f"Позиция основной камеры: {positions[0]}")
 
         # Верхняя правая сетка 2x2
         for i in range(2):
             for j in range(2):
-                x = main_width + mp_x + bt + j * (grid_width + bt)
-                y = mp_y + i * (grid_height + bt)
+                x = main_width + bt + j * (grid_width + bt)
+                y = i * (grid_height + bt)
                 positions.append((x, y, (grid_width, grid_height)))
         self.logger.info("Позиции верхней правой сетки 2x2 определены.")
 
@@ -70,7 +68,7 @@ class CameraDisplay:
         for i in range(4):
             for j in range(4):
                 x = j * (grid_width + bt)
-                y = main_height + mp_y + bt + i * (grid_height + bt)
+                y = main_height + bt + i * (grid_height + bt)
                 positions.append((x, y, (grid_width, grid_height)))
         self.logger.info("Позиции нижней сетки 4x4 определены.")
 
@@ -98,12 +96,12 @@ class CameraDisplay:
         await self.write_to_framebuffer()
 
     def draw_initial_grid(self, background):
-        """Рисует начальную сетку с надписями на фоне до подключения камер."""
+        """Рисует начальную сетку с надписями 'No Signal' на фоне до подключения камер."""
         for idx, (x, y, (width, height)) in enumerate(self.camera_positions):
             cv2.rectangle(background, (x, y), (x + width, y + height), self.border_color, self.border_thickness)
             cv2.putText(
-                background, f"Loading {idx + 1}", (x + 10, y + height // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255, 255), 1, cv2.LINE_AA
+                background, f"No Signal", (x + 10, y + height // 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0, 255), 2, cv2.LINE_AA
             )
 
     async def create_cameras(self, channels):
