@@ -58,16 +58,24 @@ class Camera:
         if ret:
             self.last_frame = cv2.resize(frame, (self.width, self.height))
             self.last_frame_time = current_time  # Обновляем время последнего кадра
+        elif self.last_frame is not None:
+            # Если нет нового кадра, возвращаем последний захваченный кадр
+            self.logger.warning(f"Кадр не получен для камеры {self.label}, используется последний кадр.")
+        else:
+            # Если кадра нет, создаем пустой "заглушку" с текстом
+            self.last_frame = await self.create_placeholder_frame()
 
         return self.last_frame
 
-    def add_borders(self, frame):
-        """Добавляет рамку к кадру."""
-        frame[:self.border_thickness, :, :] = self.border_color[:3]
-        frame[-self.border_thickness:, :, :] = self.border_color[:3]
-        frame[:, :self.border_thickness, :] = self.border_color[:3]
-        frame[:, -self.border_thickness:, :] = self.border_color[:3]
-        return frame
+    async def create_placeholder_frame(self):
+        """Создает заглушку в случае, если кадр недоступен."""
+        placeholder_frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        text = "No Signal"
+        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+        text_x = (self.width - text_size[0]) // 2
+        text_y = (self.height + text_size[1]) // 2
+        cv2.putText(placeholder_frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        return placeholder_frame
 
     async def release(self):
         """Освобождает поток камеры."""
