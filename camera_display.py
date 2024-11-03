@@ -9,28 +9,33 @@ from camera import Camera
 import config
 
 
+
 class CameraDisplay:
-    def __init__(self, fb_path="/dev/fb0", fps=26, border_thickness=2):
+    def __init__(self, fb_path="/dev/fb0", fps=26, border_thickness=2, margin_x=30, margin_y=20):
         self.fb_path = fb_path
         self.fps = fps
         self.frame_interval = 1 / fps
         self.border_thickness = border_thickness
         self.border_color = (50, 50, 50, 255)
+        self.margin_x = margin_x  # Глобальные отступы по горизонтали
+        self.margin_y = margin_y  # Глобальные отступы по вертикали
         self.logger = logging.getLogger("CameraDisplay")
         logging.basicConfig(level=logging.INFO)
 
-        # Получаем размер фреймбуфера
+        # Получаем размер фреймбуфера и учитываем отступы
         self.fb_width, self.fb_height = self.get_framebuffer_size()
-        self.logger.info(f"Размер фреймбуфера: {self.fb_width}x{self.fb_height}")
+        self.inner_width = self.fb_width - 2 * self.margin_x
+        self.inner_height = self.fb_height - 2 * self.margin_y
+        self.logger.info(f"Размер области отображения: {self.inner_width}x{self.inner_height}")
 
         # Определяем размеры областей для камер
         self.main_camera_size = (
-            self.fb_width // 2,
-            self.fb_height // 2
+            self.inner_width // 2,
+            self.inner_height // 2
         )
         self.grid_camera_size = (
-            self.fb_width // 4 - border_thickness,
-            self.fb_height // 4 - border_thickness
+            self.inner_width // 4 - border_thickness,
+            self.inner_height // 4 - border_thickness
         )
         self.camera_positions = self.define_camera_positions()
         self.cameras = []
@@ -47,28 +52,33 @@ class CameraDisplay:
             raise
 
     def define_camera_positions(self):
-        """Определяем позиции для сетки камер с учётом централизованного отображения."""
+        """Определяем позиции для сетки камер с учётом глобальных отступов и централизованного отображения."""
         main_width, main_height = self.main_camera_size
         grid_width, grid_height = self.grid_camera_size
         bt = self.border_thickness
 
-        # Центрируем основную камеру
-        positions = [(0, 0, self.main_camera_size)]
+        # Центрируем основную камеру с учетом отступов
+        start_x = self.margin_x
+        start_y = self.margin_y
+        positions = [(start_x, start_y, self.main_camera_size)]
         self.logger.info(f"Позиция основной камеры: {positions[0]}")
 
         # Верхняя правая сетка 2x2
+        upper_right_start_x = start_x + main_width + bt
+        upper_right_start_y = start_y
         for i in range(2):
             for j in range(2):
-                x = main_width + bt + j * (grid_width + bt)
-                y = i * (grid_height + bt)
+                x = upper_right_start_x + j * (grid_width + bt)
+                y = upper_right_start_y + i * (grid_height + bt)
                 positions.append((x, y, (grid_width, grid_height)))
         self.logger.info("Позиции верхней правой сетки 2x2 определены.")
 
-        # Нижняя сетка 4x4
+        # Нижняя сетка 4x4 — точно по ширине основной камеры, расположена под ней
+        lower_start_y = start_y + main_height + bt
         for i in range(4):
             for j in range(4):
-                x = j * (grid_width + bt)
-                y = main_height + bt + i * (grid_height + bt)
+                x = start_x + j * (grid_width + bt)
+                y = lower_start_y + i * (grid_height + bt)
                 positions.append((x, y, (grid_width, grid_height)))
         self.logger.info("Позиции нижней сетки 4x4 определены.")
 
@@ -100,7 +110,7 @@ class CameraDisplay:
         for idx, (x, y, (width, height)) in enumerate(self.camera_positions):
             cv2.rectangle(background, (x, y), (x + width, y + height), self.border_color, self.border_thickness)
             cv2.putText(
-                background, f"No Signal", (x + 10, y + height // 2),
+                background, "No Signal", (x + 10, y + height // 2),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0, 255), 2, cv2.LINE_AA
             )
 
