@@ -133,8 +133,8 @@ class CameraDisplay:
 
         async def create_camera(idx, channel_id, channel_info):
             label = channel_info.get("label", f"Camera {channel_id}")
-            camera = Camera(channel_info["url"], self.camera_positions[idx], label, self.border_thickness,
-                            self.border_color)
+            camera = Camera(channel_info["url"], self.camera_positions[idx], label, self.border_thickness, self.border_color)
+            await camera.connect()
             self.logger.info(
                 f"Создана камера {label} с URL: {channel_info['url']} на позиции {self.camera_positions[idx]}")
 
@@ -154,7 +154,7 @@ class CameraDisplay:
 
         # Отображаем кадры уже созданных камер
         for camera in self.cameras:
-            frame = camera.get_frame()
+            frame = await camera.get_frame()
             x, y, _ = camera.position
             self.background[y:y + frame.shape[0], x:x + frame.shape[1], :3] = frame
 
@@ -175,7 +175,7 @@ class CameraDisplay:
     async def update_camera_display(self, camera):
         """Обновляет изображение камеры в общем фоне."""
         while True:
-            frame = camera.get_frame()
+            frame = await camera.get_frame()
             x, y, _ = camera.position
             self.background[y:y + frame.shape[0], x:x + frame.shape[1], :3] = frame
             await asyncio.sleep(self.frame_interval)
