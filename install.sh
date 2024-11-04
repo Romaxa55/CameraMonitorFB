@@ -6,11 +6,14 @@ SERVICE_NAME="dvrfbdisplay"
 INSTALL_DIR="/opt/$SERVICE_NAME"
 
 # Update and install dependencies
-sudo apt update && sudo apt install -y python3 python3-venv
+sudo apt update && sudo apt install -y python3 python3-venv git
 
 # Create installation directory
 sudo mkdir -p "$INSTALL_DIR"
 sudo chown $USER:$USER "$INSTALL_DIR"
+
+# Remove exist dir
+rm -rf $INSTALL_DIR
 
 # Clone the repository
 echo "Cloning project from $REPO_URL..."
