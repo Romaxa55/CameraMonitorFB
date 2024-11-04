@@ -54,6 +54,8 @@ Run the main script to start the monitoring system:
 sudo python main.py
 ```
 
+![example](src/1.jpg)
+
 ### 🔧 Configuration Options
 
 You can configure the following in `config.py`:
