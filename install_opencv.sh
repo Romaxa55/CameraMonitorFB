@@ -2,15 +2,7 @@
 
 # Обновляем и устанавливаем необходимые зависимости
 sudo apt update
-sudo apt install -y build-essential cmake git pkg-config \
-                    libjpeg-dev libtiff-dev libpng-dev \
-                    libavcodec-dev libavformat-dev libswscale-dev \
-                    libavresample-dev libv4l-dev libxvidcore-dev libx264-dev \
-                    libxine2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-                    libgtk-3-dev libtbb-dev libatlas-base-dev gfortran \
-                    libopenblas-dev liblapack-dev liblapacke-dev \
-                    libva-dev libva-drm2 libva-x11-2 \
-                    python3-dev python3-pip
+sudo apt install -y build-essential cmake git pkg-config libswscale-dev libavcodec-dev libavutil-dev
 
 # Устанавливаем дополнительные Python пакеты
 pip3 install numpy
