@@ -12,9 +12,9 @@ sudo apt update && sudo apt install -y python3 python3-venv
 sudo mkdir -p "$INSTALL_DIR"
 sudo chown $USER:$USER "$INSTALL_DIR"
 
-# Download and extract repository
-echo "Downloading project from $REPO_URL..."
-wget -qO- "$REPO_URL" | tar xvz -C "$INSTALL_DIR" --strip-components=1
+# Clone the repository
+echo "Cloning project from $REPO_URL..."
+git clone "$REPO_URL" "$INSTALL_DIR"
 
 # Create Python virtual environment
 echo "Setting up virtual environment..."
