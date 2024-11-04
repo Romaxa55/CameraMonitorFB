@@ -7,7 +7,7 @@ import time
 
 class Camera:
     def __init__(self, url, position, label, fps=25, border_thickness=2, border_color=(50, 50, 50, 255),
-                 reconnect_interval=120):
+                 reconnect_interval=None):
         self.url = url
         self.position = position
         self.label = label
@@ -34,11 +34,12 @@ class Camera:
     async def reconnect_if_needed(self):
         """Переподключается к камере, если прошло достаточно времени с последнего подключения."""
         current_time = time.time()
-        if current_time - self.last_reconnect_time >= self.reconnect_interval:
-            self.logger.info(f"Переподключение к камере {self.label} для сброса буфера.")
-            await self.release()
-            await self.connect()
-            self.last_reconnect_time = current_time
+        if self.reconnect_interval is not None:
+            if current_time - self.last_reconnect_time >= self.reconnect_interval:
+                self.logger.info(f"Переподключение к камере {self.label} для сброса буфера.")
+                await self.release()
+                await self.connect()
+                self.last_reconnect_time = current_time
 
     async def get_frame(self):
         """Возвращает новый кадр, если доступен и прошел достаточный интервал, иначе возвращает последний кадр."""
