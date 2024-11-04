@@ -4,12 +4,21 @@
 sudo apt update
 sudo apt install -y build-essential cmake git pkg-config libswscale-dev libavcodec-dev libavutil-dev
 
+source venv/bin/activate
+
 # Устанавливаем дополнительные Python пакеты
 pip3 install numpy
 
-cd opencv || exit
+
+# Скачиваем исходный код OpenCV и OpenCV contrib (опционально)
+cd ~
+git clone https://github.com/opencv/opencv.git
+git clone https://github.com/opencv/opencv_contrib.git
+
+# Создаем и переходим в директорию сборки
+cd opencv
 mkdir build
-cd build || exit
+cd build
 
 # Запускаем CMake с заданными параметрами
 cmake -D CMAKE_BUILD_TYPE=RELEASE \

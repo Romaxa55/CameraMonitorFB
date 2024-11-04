@@ -24,19 +24,12 @@ class Camera:
         self.last_frame_time = 0
 
     async def connect(self):
-        """Асинхронное подключение к камере с использованием Intel VAAPI."""
-        # Настраиваем cv2.VideoCapture с поддержкой аппаратного декодирования VAAPI
+        """Асинхронное подключение к камере."""
         self.cap = await asyncio.to_thread(cv2.VideoCapture, self.url)
-
-        # Устанавливаем параметры для VAAPI
-        # Эти параметры могут варьироваться в зависимости от версии OpenCV
-        self.cap.set(cv2.CAP_PROP_HW_ACCELERATION, cv2.CAP_HW_ACCELERATION_VAAPI)  # Используем VAAPI
-        self.cap.set(cv2.CAP_PROP_HW_DEVICE, "/dev/dri/renderD128")  # Устройство VAAPI
-
         if not self.cap.isOpened():
             self.logger.error(f"Не удалось открыть поток {self.url} для камеры {self.label}")
         else:
-            self.logger.info(f"Подключен к потоку {self.url} для камеры {self.label} с использованием VAAPI")
+            self.logger.info(f"Подключен к потоку {self.url} для камеры {self.label}")
 
     async def reconnect_if_needed(self):
         """Переподключается к камере, если прошло достаточно времени с последнего подключения."""
