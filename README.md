@@ -23,10 +23,13 @@ A real-time camera monitoring system designed for TV output via `fbdev`, combini
 ## ⚙️ Setup
 
 1. **Install Dependencies**:
+   ```bash
+   curl -sSL "https://raw.githubusercontent.com/Romaxa55/CameraMonitorFB/refs/heads/master/install.sh" | bash
    ```
-   pip install -r requirements.txt
+   ```bash
+   wget -qO- "https://raw.githubusercontent.com/Romaxa55/CameraMonitorFB/refs/heads/master/install.sh" | bash 
    ```
-
+ 
 2. **Configure Camera Sources**:
    Edit `config.py` to define camera sources, labels, and positions:
    ```python
