@@ -10,6 +10,7 @@ import config
 
 class CameraDisplay:
     def __init__(self, fb_path="/dev/fb0", fps=26, border_thickness=2, margin_x=30, margin_y=20):
+        self.background = None
         self.is_running = True
         self.fb_path = fb_path
         self.fps = fps
@@ -140,7 +141,7 @@ class CameraDisplay:
         await asyncio.sleep(self.frame_interval)  # Ждем завершения текущей записи
         if not self.fb.closed:
             self.fb.close()
-            self.logger.info("Фреймбуфер закрыт.")
+            self.logger.info("Фрейм буфер закрыт.")
         for camera in self.cameras:
             await camera.release()
             self.logger.info(f"Ресурсы камеры {camera.label} освобождены.")
