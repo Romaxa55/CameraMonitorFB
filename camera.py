@@ -59,6 +59,12 @@ class Camera:
         if ret:
             self.last_frame = cv2.resize(frame, (self.width, self.height))
             self.last_frame_time = current_time  # Обновляем время последнего кадра
+        elif self.last_frame is not None:
+            # Если нет нового кадра, возвращаем последний захваченный кадр
+            self.logger.warning(f"Кадр не получен для камеры {self.label}, используется последний кадр.")
+        else:
+            # Если кадра нет, создаем пустой "заглушку" с текстом
+            self.last_frame = await self.create_placeholder_frame()
 
         return self.last_frame
 
